@@ -81,5 +81,22 @@ class Boot {
 
     // Make a transaction span the whole HTTP request
     S.addAround(DB.buildLoanWrapper)
+
+    LiftRules.dispatch.append {
+      case Req("logout" :: Nil, _, GetRequest) =>
+        S.request.foreach(_.request.session.terminate)
+        S.redirectTo("/")
+    }
+
+    LiftRules.earlyInStateful.append { reqBox =>
+      for {
+        r <- reqBox
+        if LiftRules.getLiftSession(r).running_?
+        loc <- S.location
+      } {
+        println(loc)
+      }
+    }
   }
 }
+
